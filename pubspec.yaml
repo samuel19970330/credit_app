@@ -1,0 +1,51 @@
+name: credit_app
+description: A new Flutter project for credit sales management.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # Database
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  
+  # Persistence (Secure)
+  flutter_secure_storage: ^9.0.0
+
+  # Excel & File Handling
+  excel: ^4.0.0
+  path_provider: ^2.1.2
+  share_plus: ^9.0.0
+  file_picker: ^8.0.0
+  
+  # PDF Generation
+  pdf: ^3.10.8
+  printing: ^5.11.0
+
+  # Utils
+  intl: ^0.19.0
+  uuid: ^4.2.2
+  google_fonts: ^6.1.0
+  fpdart: ^1.1.0 # Functional programming helpers
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.8
+  riverpod_generator: ^2.3.9
+  mocktail: ^1.0.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
