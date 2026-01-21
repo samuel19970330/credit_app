@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../provider/auth_provider.dart';
 import '../profile/profile_page.dart';
@@ -33,7 +34,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
@@ -71,6 +71,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               backgroundColor: AppTheme.primaryColor,
               child: const Icon(Icons.add, color: Colors.white),
             )
+              .animate()
+              .scale(delay: 500.ms, duration: 400.ms, curve: Curves.elasticOut)
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
@@ -130,7 +132,10 @@ class AdminMenu extends ConsumerWidget {
               }
             },
           ),
-        ],
+        ]
+            .animate(interval: 100.ms)
+            .fadeIn(duration: 400.ms)
+            .slideX(begin: 0.1, end: 0),
       ),
     );
   }
@@ -231,110 +236,141 @@ class DashboardHome extends ConsumerWidget {
   Widget _buildNavigationCards(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Accesos Rápidos',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+      child: Consumer(builder: (context, ref, child) {
+        final statsAsync = ref.watch(dashboardStatsProvider);
+        final stats = statsAsync.valueOrNull;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Accesos Rápidos',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ).animate().fadeIn().slideX(begin: -0.1, end: 0),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 2, // 2 Columns
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.3, // Wider cards
+              children: [
+                _buildNavCard(
+                  context,
+                  title: 'Clientes Registrados',
+                  count: stats?.clientCount.toString() ?? '-',
+                  icon: Icons.people,
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CustomersPage()),
+                    );
+                  },
+                ),
+                _buildNavCard(
+                  context,
+                  title: 'Créditos Activos',
+                  count: stats?.activeCreditCount.toString() ?? '-',
+                  icon: Icons.list_alt,
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CreditsListPage()),
+                    );
+                  },
+                ),
+                _buildNavCard(
+                  context,
+                  title: 'Productos Registrados',
+                  count: stats?.productCount.toString() ?? '-',
+                  icon: Icons.inventory_2,
+                  color: Colors.purple,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ProductsPage()),
+                    );
+                  },
+                ),
+              ]
+                  .animate(interval: 100.ms)
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.2, end: 0),
             ),
-          ),
-          const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            children: [
-              _buildNavCard(
-                context,
-                title: 'Clientes',
-                icon: Icons.people,
-                color: Colors.blue,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CustomersPage()),
-                  );
-                },
-              ),
-              _buildNavCard(
-                context,
-                title: 'Créditos',
-                icon: Icons.list_alt,
-                color: Colors.orange,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CreditsListPage()),
-                  );
-                },
-              ),
-              _buildNavCard(
-                context,
-                title: 'Productos',
-                icon: Icons.inventory_2,
-                color: Colors.purple,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ProductsPage()),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 
   Widget _buildNavCard(
     BuildContext context, {
     required String title,
+    required String count,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+              color: color.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 28),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 28),
+                ),
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 32,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const Spacer(),
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
                 fontSize: 14,
+                color: Colors.grey[600],
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -409,7 +445,7 @@ class DashboardHome extends ConsumerWidget {
                 onPressed: () {},
               )
             ],
-          ),
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, end: 0),
           const SizedBox(height: 32),
           Text(
             'Total por Cobrar',
@@ -417,7 +453,10 @@ class DashboardHome extends ConsumerWidget {
               color: Colors.white.withOpacity(0.8),
               fontSize: 16,
             ),
-          ),
+          )
+              .animate()
+              .fadeIn(delay: 200.ms, duration: 600.ms)
+              .slideX(begin: -0.2, end: 0),
           const SizedBox(height: 8),
           Text(
             stats != null
@@ -430,7 +469,10 @@ class DashboardHome extends ConsumerWidget {
               fontSize: 36,
               fontWeight: FontWeight.bold,
             ),
-          ),
+          )
+              .animate()
+              .fadeIn(delay: 400.ms, duration: 600.ms)
+              .scale(begin: const Offset(0.8, 0.8)),
           const SizedBox(height: 24),
         ],
       ),

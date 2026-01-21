@@ -1,3 +1,4 @@
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -68,7 +69,10 @@ class CustomersPage extends ConsumerWidget {
                   );
                 },
                 child: _CustomerCard(customer: customer),
-              );
+              )
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: (50 * index).ms)
+                  .slideX(begin: 0.1, end: 0);
             },
           );
         },

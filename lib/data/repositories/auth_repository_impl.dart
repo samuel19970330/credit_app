@@ -34,9 +34,21 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Store session data
       await _storage.write(key: _keyUserId, value: user.id);
-      await _storage.write(key: _keyUserName, value: user.name);
+
+      // key: _keyUserName: Check if exists, else write default
+      final existingName = await _storage.read(key: _keyUserName);
+      if (existingName == null) {
+        await _storage.write(key: _keyUserName, value: user.name);
+      }
+
       await _storage.write(key: _keyUserEmail, value: user.email);
-      await _storage.write(key: _keyUserPhoto, value: user.photoUrl ?? '');
+
+      // key: _keyUserPhoto: Check if exists, else write default (which is null/empty)
+      final existingPhoto = await _storage.read(key: _keyUserPhoto);
+      if (existingPhoto == null) {
+        await _storage.write(key: _keyUserPhoto, value: user.photoUrl ?? '');
+      }
+
       await _storage.write(key: _keyPassword, value: password);
       await _storage.write(
           key: _keyLoginTime, value: DateTime.now().toIso8601String());
@@ -49,7 +61,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    await _storage.deleteAll();
+    // Delete only session-related keys
+    await _storage.delete(key: _keyLoginTime);
+    await _storage.delete(key: _keyPassword);
+    // Keep user profile data (name, photo, etc.) for next login
   }
 
   @override

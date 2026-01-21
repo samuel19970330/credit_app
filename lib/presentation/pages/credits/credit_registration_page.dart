@@ -7,6 +7,7 @@ import '../../provider/credit_form_provider.dart';
 import '../../provider/customer_provider.dart';
 import '../../provider/product_provider.dart';
 import '../../provider/credit_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 class CreditRegistrationPage extends ConsumerStatefulWidget {
   const CreditRegistrationPage({super.key});
@@ -338,8 +339,10 @@ class _CreditRegistrationPageState
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.green),
               ),
+              // Use primary color for installment, readable in both modes (purple/blue-ish)
+              // or standard green if it's bright enough. Let's use primaryColor for consistency.
               child: _summaryRow('Valor Cuota Mensual', state.installmentAmount,
-                  color: Colors.green.shade800, isTotal: true),
+                  color: AppTheme.primaryColor, isTotal: true),
             ),
           ],
         ),
@@ -357,7 +360,7 @@ class _CreditRegistrationPageState
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: color,
+            color: color ?? Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         Text(
@@ -365,7 +368,7 @@ class _CreditRegistrationPageState
           style: TextStyle(
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: color,
+            color: color ?? Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ],

@@ -1,3 +1,4 @@
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -105,7 +106,10 @@ class _CreditsListPageState extends ConsumerState<CreditsListPage> {
                   itemBuilder: (context, index) {
                     final credit = filteredCredits[index];
                     if (_searchQuery.isEmpty) {
-                      return _CreditCard(credit: credit);
+                      return _CreditCard(credit: credit)
+                          .animate()
+                          .fadeIn(duration: 400.ms, delay: (50 * index).ms)
+                          .slideX(begin: 0.1, end: 0);
                     }
                     // Filter by customer document
                     return FutureBuilder(
@@ -116,7 +120,10 @@ class _CreditsListPageState extends ConsumerState<CreditsListPage> {
                         if (snapshot.hasData && snapshot.data != null) {
                           final customer = snapshot.data!;
                           if (customer.documentId.contains(_searchQuery)) {
-                            return _CreditCard(credit: credit);
+                            return _CreditCard(credit: credit)
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .slideX(begin: 0.1, end: 0);
                           }
                         }
                         return const SizedBox.shrink();
@@ -191,52 +198,38 @@ class _CreditCard extends ConsumerWidget {
                         .read(customerListProvider.notifier)
                         .getCustomerById(credit.customerId),
                     builder: (context, snapshot) {
-                      if (snapshot.hasData && snapshot.data != null) {
-                        final customer = snapshot.data!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              customer.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'CC: ${customer.documentId}',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              'Inicio: ${_formatDate(credit.startDate)}',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
+                      final customerName =
+                          snapshot.hasData ? snapshot.data!.name : 'Cliente';
+                      final customerDoc =
+                          snapshot.hasData ? snapshot.data!.documentId : '...';
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Crédito',
+                          Text(
+                            '#${credit.id.substring(0, 8).toUpperCase()}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              letterSpacing: 1,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
-                            'Inicio: ${_formatDate(credit.startDate)}',
+                            customerName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18, // Larger font
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'CC: $customerDoc',
                             style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontSize: 13,
                             ),
                           ),
                         ],
@@ -247,13 +240,53 @@ class _CreditCard extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (credit.remainingBalance <= 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.green),
+                        ),
+                        child: const Text(
+                          'PAGADO',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      )
+                    else if (credit.isOverdue)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.red),
+                        ),
+                        child: const Text(
+                          'EN MORA',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
                     Text(
                       NumberFormat.currency(
                               locale: 'es_CO', symbol: '\$', decimalDigits: 0)
                           .format(credit.totalWithInterest),
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17,
                       ),
                     ),
                     Text(
@@ -267,30 +300,58 @@ class _CreditCard extends ConsumerWidget {
                 ),
               ],
             ),
-            const Divider(height: 24),
+            const Divider(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Saldo Pendiente',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Inicio',
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      _formatDate(credit.startDate),
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  NumberFormat.currency(
-                          locale: 'es_CO', symbol: '\$', decimalDigits: 0)
-                      .format(credit.remainingBalance),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.errorColor,
-                    fontSize: 14,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Saldo Pendiente',
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      NumberFormat.currency(
+                              locale: 'es_CO', symbol: '\$', decimalDigits: 0)
+                          .format(credit.remainingBalance),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: credit.remainingBalance <= 0
+                            ? Colors.green
+                            : AppTheme.errorColor,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.grey, size: 20),
                   onPressed: () => _confirmDelete(context, ref),
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,

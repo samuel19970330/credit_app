@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -85,7 +85,9 @@ class DatabaseHelper {
         amount $realType,
         dueDate $textType,
         paymentDate $textNullable,
+        paymentDate $textNullable,
         isPaid $integerType,
+        paidAmount $realType DEFAULT 0.0,
         capitalAmount $realType,
         interestAmount $realType,
         FOREIGN KEY (creditId) REFERENCES credits (id) ON DELETE CASCADE
@@ -152,11 +154,20 @@ class DatabaseHelper {
           dueDate $textType,
           paymentDate $textNullable,
           isPaid $integerType,
+          paidAmount $realType DEFAULT 0.0,
           capitalAmount $realType,
           interestAmount $realType,
           FOREIGN KEY (creditId) REFERENCES credits (id) ON DELETE CASCADE
         )
       ''');
+    }
+
+    if (oldVersion < 4) {
+      // Add paidAmount column to installments if it doesn't exist
+      // Since we can't easily check column existence in raw SQL in onUpgrade without query,
+      // generally we just run ALTER TABLE.
+      await db.execute(
+          'ALTER TABLE installments ADD COLUMN paidAmount REAL DEFAULT 0.0');
     }
   }
 

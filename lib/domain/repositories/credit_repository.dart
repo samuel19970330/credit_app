@@ -7,4 +7,7 @@ abstract class CreditRepository {
   Future<void> addCredit(Credit credit);
   Future<void> deleteCredit(String id);
   Future<void> payInstallment(String creditId, String installmentId);
+  Future<Map<String, dynamic>> processExtraordinaryPayment(
+      String creditId, double amount);
+  Future<void> recalculateBalances();
 }

@@ -58,4 +58,9 @@ class Credit {
       installments: installments ?? [],
     );
   }
+  bool get isOverdue {
+    if (remainingBalance <= 0) return false;
+    final now = DateTime.now();
+    return installments.any((i) => !i.isPaid && i.dueDate.isBefore(now));
+  }
 }

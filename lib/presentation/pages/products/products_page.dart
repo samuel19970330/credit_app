@@ -1,7 +1,11 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/excel_service.dart';
 import '../../../domain/entities/product.dart';
 import '../../provider/product_provider.dart';
 import 'product_form_page.dart';
@@ -21,6 +25,40 @@ class ProductsPage extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: AppTheme.primaryColor),
+            onSelected: (value) {
+              if (value == 'template') {
+                _downloadTemplate(context);
+              } else if (value == 'import') {
+                _importProducts(context, ref);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'template',
+                child: Row(
+                  children: [
+                    Icon(Icons.download, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('Descargar Plantilla'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'import',
+                child: Row(
+                  children: [
+                    Icon(Icons.upload_file, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('Cargar Productos'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: productsAsync.when(
         data: (products) {
@@ -74,6 +112,84 @@ class ProductsPage extends ConsumerWidget {
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  Future<void> _downloadTemplate(BuildContext context) async {
+    try {
+      final path = await ExcelService.generateProductTemplate();
+      if (context.mounted) {
+        await Share.shareXFiles([XFile(path)], text: 'Plantilla de Productos');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importProducts(BuildContext context, WidgetRef ref) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xlsx'],
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final fileBytes = result.files.first.bytes;
+        // Sometimes bytes are null on mobile if not loaded into memory?
+        // FilePicker withData: true should handle it.
+        // If from path: File(result.files.single.path!).readAsBytesSync();
+
+        List<int>? bytes = fileBytes;
+        if (bytes == null && result.files.single.path != null) {
+          bytes = await File(result.files.single.path!).readAsBytes();
+        }
+
+        if (bytes != null) {
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final products = await ExcelService.parseProducts(bytes);
+
+          int count = 0;
+          for (var product in products) {
+            await ref.read(productListProvider.notifier).addProduct(product);
+            count++;
+          }
+
+          if (context.mounted) {
+            Navigator.pop(context); // Close loading
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Se importaron $count productos exitosamente')),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading if open? Hard to know if dialog is top.
+        // Usually we track if dialog is open. For simplicity, assume simple flow.
+        // If error happens during parsing, dialog might still be up.
+        // Safest is to try pop if we pushed it, but simpler to just show snackbar.
+        Navigator.of(context).popUntil(
+            (route) => route.isFirst || route.settings.name == '/products');
+        // Actually just popping once is risky if dialog wasn't shown.
+        // Better to show error.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al importar: $e')),
+        );
+      }
+    }
   }
 }
 

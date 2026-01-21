@@ -249,7 +249,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   title: const Text('Cambiar Contraseña'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _showChangePasswordDialog,
-                  tileColor: Colors.grey[100],
+                  tileColor: Theme.of(context).cardColor,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),

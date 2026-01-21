@@ -36,6 +36,7 @@ dependencies:
   uuid: ^4.2.2
   google_fonts: ^6.1.0
   fpdart: ^1.1.0 # Functional programming helpers
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

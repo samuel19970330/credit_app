@@ -6,6 +6,7 @@ class Installment {
   final DateTime dueDate;
   final DateTime? paymentDate;
   final bool isPaid;
+  final double paidAmount;
   final double capitalAmount;
   final double interestAmount;
 
@@ -17,6 +18,7 @@ class Installment {
     required this.dueDate,
     this.paymentDate,
     this.isPaid = false,
+    this.paidAmount = 0.0,
     this.capitalAmount = 0.0,
     this.interestAmount = 0.0,
   });
@@ -30,6 +32,7 @@ class Installment {
       'dueDate': dueDate.toIso8601String(),
       'paymentDate': paymentDate?.toIso8601String(),
       'isPaid': isPaid ? 1 : 0,
+      'paidAmount': paidAmount,
       'capitalAmount': capitalAmount,
       'interestAmount': interestAmount,
     };
@@ -46,6 +49,7 @@ class Installment {
           ? DateTime.parse(map['paymentDate'])
           : null,
       isPaid: map['isPaid'] == 1,
+      paidAmount: (map['paidAmount'] ?? 0.0) as double,
       capitalAmount: map['capitalAmount'] ?? 0.0,
       interestAmount: map['interestAmount'] ?? 0.0,
     );
